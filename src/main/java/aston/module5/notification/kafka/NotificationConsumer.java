@@ -19,14 +19,18 @@ public class NotificationConsumer {
         if (parts.length < 2) return;
 
         String operation = parts[0];
-        String email = parts[1];
+        String body = parts[1];
 
-        if ("CREATE".equals(operation)) {
-            emailService.sendEmail(email, "Здравствуйте! Ваш аккаунт на сайте ваш сайт был успешно создан.");
-        } else if ("DELETE".equals(operation)) {
-            emailService.sendEmail(email, "Здравствуйте! Ваш аккаунт был удалён.");
-        } else if ("UPDATE".equals(operation)) {
-            emailService.sendEmail(email, "Здравствуйте! Ваш аккаунт был изменен.");
+        if ("MESSAGE".equalsIgnoreCase(operation)) {
+            String[] messageParts = body.split(":", 2);
+            if (messageParts.length == 2) {
+                String email = messageParts[0];
+                String customText = messageParts[1];
+
+                emailService.sendNotification(email, "MESSAGE:" + customText);
+            }
+        } else {
+            emailService.sendNotification(body, operation);
         }
     }
 }

@@ -1,5 +1,5 @@
 package aston.module5.notification.service;
 
 public interface EmailService {
-    void sendEmail(String toEmail, String text);
+    void sendNotification(String toEmail, String operation);
 }
