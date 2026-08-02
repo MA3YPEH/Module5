@@ -1,5 +1,6 @@
 package aston.module5.notification;
 
+import aston.module5.notification.service.EmailServiceImpl;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.junit.jupiter.api.BeforeEach;
@@ -19,6 +20,7 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Map;
 
@@ -35,6 +37,9 @@ class NotificationEmailIT {
     @Autowired
     private EmbeddedKafkaBroker embeddedKafkaBroker;
 
+    @Autowired
+    private EmailServiceImpl emailService;
+
     private KafkaTemplate<String, String> kafkaTemplate;
 
     @MockitoBean
@@ -48,6 +53,10 @@ class NotificationEmailIT {
 
     @BeforeEach
     void setUp() {
+        org.mockito.Mockito.reset(mailSender);
+
+        ReflectionTestUtils.setField(emailService, "fromEmail", "sender@yandex.ru");
+
         Map<String, Object> producerProps = KafkaTestUtils.producerProps(embeddedKafkaBroker);
         producerProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         producerProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
@@ -67,6 +76,8 @@ class NotificationEmailIT {
 
         SimpleMailMessage sentMessage = messageCaptor.getValue();
         assertNotNull(sentMessage);
+
+        assertEquals("sender@yandex.ru", sentMessage.getFrom());
         assertEquals("ivan@mail.ru", sentMessage.getTo()[0]);
         assertEquals("Здравствуйте! Ваш аккаунт на сайте ваш сайт был успешно создан.", sentMessage.getText());
     }
@@ -97,5 +108,21 @@ class NotificationEmailIT {
         assertNotNull(sentMessage);
         assertEquals("ivan@mail.ru", sentMessage.getTo()[0]);
         assertEquals("Здравствуйте! Ваш аккаунт был изменен.", sentMessage.getText());
+    }
+
+    @Test
+    @DisplayName("IT Почта: Проверка отправки сообщения при событии MESSAGE:")
+    void testEmailSentOnCustomMessageEvent() {
+        // Симулируем отправку произвольного текста через Кафку
+        kafkaTemplate.send("user-events", "MESSAGE:artem@mail.ru:Тестовое сообщение!");
+
+        ArgumentCaptor<SimpleMailMessage> messageCaptor = ArgumentCaptor.forClass(SimpleMailMessage.class);
+        verify(mailSender, timeout(5000).times(1)).send(messageCaptor.capture());
+
+        SimpleMailMessage sentMessage = messageCaptor.getValue();
+        assertNotNull(sentMessage);
+        assertEquals("sender@yandex.ru", sentMessage.getFrom());
+        assertEquals("artem@mail.ru", sentMessage.getTo()[0]);
+        assertEquals("Тестовое сообщение!", sentMessage.getText());
     }
 }
