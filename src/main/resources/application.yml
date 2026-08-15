@@ -1,6 +1,6 @@
 spring:
   application:
-    name: Module5
+    name: notification-service
 
   # Yandex SMTP
   mail:
@@ -36,3 +36,9 @@ server:
   port: 8082
   servlet:
     context-path: /module4
+
+# Настройка Eureka
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
