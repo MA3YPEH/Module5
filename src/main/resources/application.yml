@@ -1,0 +1,38 @@
+spring:
+  application:
+    name: Module5
+
+  # Yandex SMTP
+  mail:
+    host: smtp.yandex.ru
+    port: 465
+    username: ${EMAIL}
+    password: ${EMAIL_PASSWORD}
+    properties:
+      mail:
+        debug: true
+        smtp:
+          auth: true
+          ssl:
+            enable: true
+            required: true
+            trust: smtp.yandex.ru
+          starttls:
+            enable: true
+            required: true
+          socketFactory:
+            port: 465
+            class: javax.net.ssl.SSLSocketFactory
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
+
+  # Настройки Kafka
+  kafka:
+    bootstrap-servers: localhost:9092
+
+# Настройки Сервера
+server:
+  port: 8082
+  servlet:
+    context-path: /module4
